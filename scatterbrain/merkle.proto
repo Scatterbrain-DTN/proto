@@ -1,0 +1,17 @@
+syntax = "proto3";
+package scatterbrain;
+
+enum DeclareHashesMode {
+    NORMAL = 0;
+    MERKLEPROOF = 1;
+}
+
+// Used for avoiding retransmitting messages already on remote peer.
+// yes I am aware i should have used a merkle tree. I was sleepy.
+message DeclareHashes {
+   // ScatterType type = 1;
+    bool optout = 1;
+    repeated bytes hashes = 2;
+    DeclareHashesMode mode = 3;
+    bool exists = 4;
+}

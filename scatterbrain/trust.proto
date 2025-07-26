@@ -1,0 +1,16 @@
+syntax = "proto3";
+package scatterbrain;
+
+
+// a user identity with name and one or more keys
+message Identity {
+    message Body {
+        string givenname = 2;
+        map<string, bytes> keys = 3;
+        bytes sig = 4;
+    }
+    oneof message {
+        bool end = 5;
+        Body val = 6;
+    }
+}

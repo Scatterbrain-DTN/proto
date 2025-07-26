@@ -1,0 +1,85 @@
+syntax = "proto3";
+package scatterbrain;
+
+import "scatterbrain/uuid.proto";
+import "scatterbrain/merkle.proto";
+
+// For gossiping about wifi direct "ukes" in area. Currently unused
+message ExtraUke {
+    ProtoUuid luid = 2;
+    Upgrade upgrade = 3;
+}
+
+// Symmetry breaking role used for bootstrapping to another protocol
+enum Role {
+    UKE = 0;
+    SEME = 1;
+    SUPER_UKE = 2;
+    SUPER_SEME = 3;
+}
+
+// used to advertise the presence of a scatterbrain device
+// and to request the exchange of identities and blockdata
+message Advertise {
+   // ScatterType type = 1;
+    repeated uint32 provides = 1;
+    DeclareHashesMode mode = 2;
+}
+
+// For declaring local router identity.
+message Luid {
+    message hashed {
+        uint32 protoversion = 2;
+        bytes hash = 3;
+    }
+    oneof val {
+        ProtoUuid val_uuid = 4;
+        hashed val_hash = 5;
+    }
+}
+
+// Packet for voting in distributed elections. Used for bootstrapping
+message ElectLeader {
+    ProtoUuid sender = 2;
+    message Body {
+        bytes salt = 3;
+        uint32 provides = 4;
+        ProtoUuid tiebreaker_val = 5;
+        oneof maybe_upgrade { Upgrade upgrade = 6; };
+    }
+    oneof val {
+        Body val_body = 7;
+        bytes val_hash = 8;
+    }
+}
+
+
+// Used for informing new wifi direct peers about neighbors
+message IpAnnounceItem {
+    ProtoUuid id = 1;
+    string address = 2;
+    uint32 port = 3;
+    bool uke = 4;
+}
+
+// Currently unused, part of old "gossip" based wifi direct bootstrap method
+message JustUkes  {
+    repeated ExtraUke ukes = 1;
+    bool too_small = 2;
+}
+
+
+// Used for informing new wifi direct peers about neighbors
+message IpAnnounce {
+    ProtoUuid self = 1;
+    repeated IpAnnounceItem items = 2;
+}
+
+// used to request switching to a different physical transport
+message Upgrade {
+    uint32 provides = 2;
+    uint32 sessionid = 3;
+    map<string, string> metadata = 4;
+    ProtoUuid from = 5;
+    Role role = 6;
+}

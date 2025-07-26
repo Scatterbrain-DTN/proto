@@ -1,0 +1,8 @@
+syntax = "proto3";
+package scatterbrain;
+
+// Protobuf has no native UUID type. This is 128 bit UUID.
+message ProtoUuid {
+    uint64 lower = 1;
+    uint64 upper = 2;
+}

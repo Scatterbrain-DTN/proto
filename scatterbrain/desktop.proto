@@ -1,0 +1,221 @@
+syntax = "proto3";
+
+package scatterbrain;
+
+import "scatterbrain/uuid.proto";
+
+/*
+ * Desktop control protocol. Used for controlling one or more scatterbrain routers
+ * from desktop apps
+ */
+
+// Response code for pairing operations
+enum RespCode {
+    OK = 0;
+    ERR = 1;
+    DENIED = 2;
+}
+
+
+// Header for all messages sent in the context of a session
+message ApiHeader {
+   // ScatterType type = 1;
+    ProtoUuid session = 1;
+    oneof stream { int32 stream_id = 2; }
+}
+
+// Sent by a desktop app to initiate a pairing request, offering
+// public key
+message PairingInitiate {
+    bytes pubkey = 1;
+}
+
+message PairingAck {
+    ApiHeader session = 1;
+    bytes pubkey = 2;
+}
+
+message PairingSynAck {
+    ApiHeader session = 1;
+    bool success = 2;
+    string message = 3;
+}
+
+
+message PairingRequest {
+    ApiHeader session = 1;
+    string name = 2;
+}
+
+
+
+// Response sent once by the device and once by the desktop app to indicate
+// whether the button has been pressed
+// this is sent as a CryptoMessage
+message UnitResponse {
+    ApiHeader header = 1;
+    RespCode code = 2;
+    oneof unitresponse_maybe_message {
+        string message_code = 3;
+    }
+}
+
+// Wrapper for libsodium secret boxes (authenticated encryption)
+message CryptoMessage {
+    bytes nonce = 1;
+    bytes encrypted = 2;
+}
+
+// Scattermessage stored on device
+message ApiMessage {
+    ProtoUuid fromFingerprint = 1;
+    ProtoUuid toFingerprint = 2;
+    string application = 3;
+    string extension = 4;
+    string mime = 5;
+    int64  sendDate = 6;
+    int64 receiveDate = 7;
+    bool isFile = 8;
+    ProtoUuid id = 9;
+    bytes body = 10;
+    string fileName = 11;
+}
+
+// Identity stored on device
+message ApiIdentity {
+    ProtoUuid fingerprint = 1;
+    string name = 2;
+    bytes publicKey = 3;
+    bool isOwned = 4;
+    map<string, bytes> extra = 5;
+    bytes sig = 6;
+}
+
+// command to send messages
+message SendMessageCmd {
+    ApiHeader header = 1;
+    repeated ApiMessage messages = 2;
+    oneof signIdentity {
+        ProtoUuid identity = 3;
+    }
+}
+
+message GetMessagesCmd {
+    ApiHeader header = 1;
+    oneof timeSlice {
+        TimeRange sendDate = 2;
+        TimeRange receiveDate = 3;
+    };
+    oneof maybeApplication {
+        string application = 5;
+    }
+    int32 limit = 6;
+    message Start {
+        int64 start = 1;
+    }
+    message End {
+        int64 end = 1;
+    }
+    message TimeRange {
+        oneof startPoint {
+            int64 start = 1;
+        }
+        oneof endPoint {
+            int64 end = 2;
+        }
+    }
+}
+
+// Get an identity by id
+message GetIdentityCommand {
+    ApiHeader header = 1;
+    oneof id { ProtoUuid identity = 2; }
+    bool owned = 3;
+}
+
+// Identity with response code
+message IdentityResponse {
+    ApiHeader header = 1;
+    repeated ApiIdentity identity = 2;
+    RespCode code = 3;
+}
+
+// Message with response code
+message MessageResponse {
+    ApiHeader header = 1;
+    repeated ApiMessage messsage = 2;
+    RespCode code = 3;
+}
+
+message GenerateIdentityCommand {
+    ApiHeader header = 1;
+    string name = 2;
+}
+
+message ImportIdentityCommand {
+    ApiHeader header = 1;
+    oneof maybeHandle {
+        ProtoUuid handle = 2;
+    }
+}
+
+
+message GenerateIdentityResponse {
+    ApiHeader header = 1;
+    ProtoUuid identity = 2;
+    RespCode code = 3;
+}
+
+message ImportIdentityResponse {
+    ApiHeader header = 1;
+    RespCode code = 2;
+    oneof state {
+        FinalResponse final = 3;
+        ProtoUuid handle = 4;
+    }
+    message FinalResponse {
+        ProtoUuid handle = 5;
+        ProtoUuid identity = 6;
+    }
+}
+
+message GetEvents {
+    ApiHeader header = 1;
+    bool block = 2;
+    oneof maybeCount {
+        uint32 count = 3;
+    }
+}
+
+message SbEvents {
+    ApiHeader header = 1;
+    repeated SbEvent events = 2;
+}
+
+message SbEvent {
+    oneof MaybeEvent {
+        NewMessage newMessage = 21;
+        NewIdentity newIdentities = 2;
+    }
+
+    message NewMessage {
+        repeated NoBodyMessage messages = 1;
+    }
+
+    message NoBodyMessage {
+        ProtoUuid fromFingerprint = 1;
+        ProtoUuid toFingerprint = 2;
+        string application = 3;
+        string extension = 4;
+        string mime = 5;
+        int64  sendDate = 6;
+        int64 receiveDate = 7;
+        bool isFile = 8;
+        ProtoUuid id = 9;
+        string fileName = 10;
+    }
+
+    message NewIdentity {
+        repeated ApiIdentity identities = 1;
+    }
+}
