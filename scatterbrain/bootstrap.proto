@@ -24,6 +24,7 @@ message Advertise {
    // ScatterType type = 1;
     repeated uint32 provides = 1;
     DeclareHashesMode mode = 2;
+    bool busy = 3;
 }
 
 // For declaring local router identity.
