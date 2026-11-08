@@ -1,0 +1,7 @@
+syntax = "proto3";
+package scatterbrain;
+
+enum MeshtasticPort {
+    UNKNOWN = 0;
+    SCATTERBRAIN = 288;
+}
